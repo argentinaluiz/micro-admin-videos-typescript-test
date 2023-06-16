@@ -5,6 +5,7 @@ import { CATEGORY_PROVIDERS } from './category.providers';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { CategorySequelize } from '@fc/micro-videos/category/infra';
 //categoria, entidade 1 e entidade 2
+
 @Module({
   imports: [SequelizeModule.forFeature([CategorySequelize.CategoryModel])],
   controllers: [CategoriesController],
@@ -12,6 +13,11 @@ import { CategorySequelize } from '@fc/micro-videos/category/infra';
     CategoriesService,
     ...Object.values(CATEGORY_PROVIDERS.REPOSITORIES),
     ...Object.values(CATEGORY_PROVIDERS.USE_CASES),
+    ...Object.values(CATEGORY_PROVIDERS.VALIDATIONS),
+  ],
+  exports: [
+    CATEGORY_PROVIDERS.REPOSITORIES.CATEGORY_REPOSITORY.provide,
+    CATEGORY_PROVIDERS.VALIDATIONS.CATEGORIES_IDS_VALIDATOR.provide,
   ],
 })
 export class CategoriesModule {}

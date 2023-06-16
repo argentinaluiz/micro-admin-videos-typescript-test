@@ -5,6 +5,7 @@ import {
   GetCategoryUseCase,
   ListCategoriesUseCase,
   DeleteCategoryUseCase,
+  CategoriesIdsValidator,
 } from '@fc/micro-videos/category/application';
 import { CategoryRepository } from '@fc/micro-videos/category/domain';
 import {
@@ -70,6 +71,16 @@ export namespace CATEGORY_PROVIDERS {
       provide: DeleteCategoryUseCase.UseCase,
       useFactory: (categoryRepo: CategoryRepository.Repository) => {
         return new DeleteCategoryUseCase.UseCase(categoryRepo);
+      },
+      inject: [REPOSITORIES.CATEGORY_REPOSITORY.provide],
+    };
+  }
+
+  export namespace VALIDATIONS {
+    export const CATEGORIES_IDS_VALIDATOR = {
+      provide: CategoriesIdsValidator,
+      useFactory: (categoryRepo: CategoryRepository.Repository) => {
+        return new CategoriesIdsValidator(categoryRepo);
       },
       inject: [REPOSITORIES.CATEGORY_REPOSITORY.provide],
     };

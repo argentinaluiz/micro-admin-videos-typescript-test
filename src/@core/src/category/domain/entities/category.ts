@@ -1,9 +1,8 @@
 import UniqueEntityId from "../../../@seedwork/domain/value-objects/unique-entity-id.vo";
-import Entity from "../../../@seedwork/domain/entity/entity";
-//import ValidatorRules from "../../../@seedwork/validators/validator-rules";
 import CategoryValidatorFactory from "../validators/category.validator";
 import { EntityValidationError } from "../../../@seedwork/domain/errors/validation-error";
 import { CategoryFakeBuilder } from "./category-fake-builder";
+import AggregateRoot from "../../../@seedwork/domain/entity/aggregate-root";
 
 export type CategoryProperties = {
   name: string;
@@ -11,10 +10,15 @@ export type CategoryProperties = {
   is_active?: boolean;
   created_at?: Date;
 };
+export class CategoryId extends UniqueEntityId {
 
-export class Category extends Entity<CategoryProperties> {
-  constructor(public readonly props: CategoryProperties, id?: UniqueEntityId) {
-    super(props, id);
+}
+
+export type CategoryPropsJson = Required<{ id: string } & CategoryProperties>;
+
+export class Category extends AggregateRoot<CategoryId, CategoryProperties> {
+  constructor(public readonly props: CategoryProperties, id?: CategoryId) {
+    super(props, id ?? new CategoryId());
     Category.validate(props);
     this.description = this.props.description;
     this.props.is_active = this.props.is_active ?? true;
@@ -80,8 +84,18 @@ export class Category extends Entity<CategoryProperties> {
     return this.props.created_at;
   }
 
-  static fake() { 
+  static fake() {
     return CategoryFakeBuilder;
+  }
+
+  toJSON(): CategoryPropsJson {
+    return {
+      id: this.id.toString(),
+      name: this.name,
+      description: this.description,
+      is_active: this.is_active,
+      created_at: this.created_at,
+    };
   }
 }
 

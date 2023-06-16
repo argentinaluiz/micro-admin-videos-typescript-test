@@ -1,3 +1,4 @@
+import { CategoryId } from "./../../../domain/entities/category";
 import {
   Column,
   DataType,
@@ -5,18 +6,20 @@ import {
   Table,
   Model,
 } from "sequelize-typescript";
-import { SequelizeModelFactory } from "../../../../@seedwork/infra/sequelize/sequelize-model-factory";
+import { SequelizeModelFactory } from "../../../../@seedwork/infra/db/sequelize/sequelize-model-factory";
 import {
-  UniqueEntityId,
   NotFoundError,
   LoadEntityError,
   EntityValidationError,
+  SortDirection,
+  InvalidArgumentError,
 } from "#seedwork/domain";
 import {
   CategoryRepository as CategoryRepositoryContract,
   Category,
 } from "#category/domain";
-import { Op } from "sequelize";
+import { literal, Op } from "sequelize";
+import { UnitOfWorkSequelize } from "../../../../@seedwork/infra/db/sequelize/unit-of-work-sequelize";
 
 export namespace CategorySequelize {
   type CategoryModelProps = {
@@ -42,7 +45,7 @@ export namespace CategorySequelize {
     @Column({ allowNull: false, type: DataType.BOOLEAN })
     declare is_active: boolean;
 
-    @Column({ allowNull: false, type: DataType.DATE })
+    @Column({ allowNull: false, type: DataType.DATE(6) })
     declare created_at: Date;
 
     static factory() {
@@ -63,19 +66,31 @@ export namespace CategorySequelize {
   export class CategoryRepository
     implements CategoryRepositoryContract.Repository
   {
+    unitOfWork: UnitOfWorkSequelize | null = null;
     sortableFields: string[] = ["name", "created_at"];
-
+    orderBy = {
+      mysql: {
+        name: (sort_dir: SortDirection) => literal(`binary name ${sort_dir}`),
+      },
+    };
     constructor(private categoryModel: typeof CategoryModel) {}
 
     async insert(entity: Category): Promise<void> {
-      await this.categoryModel.create(entity.toJSON());
+      await this.categoryModel.create(entity.toJSON(), {
+        transaction: this.unitOfWork?.getTransaction(),
+      });
     }
 
     async bulkInsert(entities: Category[]): Promise<void> {
-      await this.categoryModel.bulkCreate(entities.map((e) => e.toJSON()));
+      await this.categoryModel.bulkCreate(
+        entities.map((e) => e.toJSON()),
+        {
+          transaction: this.unitOfWork?.getTransaction(),
+        }
+      );
     }
 
-    async findById(id: string | UniqueEntityId): Promise<Category> {
+    async findById(id: string | CategoryId): Promise<Category> {
       //DDD Entidade - regras - valida
       const _id = `${id}`;
       const model = await this._get(_id);
@@ -83,25 +98,68 @@ export namespace CategorySequelize {
     }
 
     async findAll(): Promise<Category[]> {
-      const models = await this.categoryModel.findAll();
+      const models = await this.categoryModel.findAll({
+        transaction: this.unitOfWork?.getTransaction(),
+      });
       return models.map((m) => CategoryModelMapper.toEntity(m));
+    }
+
+    async findByIds(ids: CategoryId[]): Promise<Category[]> {
+      const models = await this.categoryModel.findAll({
+        where: {
+          id: {
+            [Op.in]: ids.map((id) => `${id}`),
+          },
+        },
+        transaction: this.unitOfWork?.getTransaction(),
+      });
+      return models.map((m) => CategoryModelMapper.toEntity(m));
+    }
+
+    async existsById(ids: CategoryId[]): Promise<[CategoryId[], CategoryId[]]> {
+      if (!ids.length) {
+        throw new InvalidArgumentError(
+          "ids must be an array with at least one element"
+        );
+      }
+
+      const existsCategoryModels = await this.categoryModel.findAll({
+        attributes: ["id"],
+        where: {
+          id: {
+            [Op.in]: ids.map((id) => `${id}`),
+          },
+        },
+        transaction: this.unitOfWork?.getTransaction(),
+      });
+      
+      const existsCategoryIds = existsCategoryModels.map((m) => new CategoryId(m.id));
+      const notExistsCategoryIds = ids.filter(
+        (id) => !existsCategoryIds.some((e) => e.equals(id))
+        );
+      return [existsCategoryIds, notExistsCategoryIds];
     }
 
     async update(entity: Category): Promise<void> {
       await this._get(entity.id);
       await this.categoryModel.update(entity.toJSON(), {
         where: { id: entity.id },
+        transaction: this.unitOfWork?.getTransaction(),
       });
     }
-    async delete(id: string | UniqueEntityId): Promise<void> {
+    async delete(id: string | CategoryId): Promise<void> {
       const _id = `${id}`;
       await this._get(_id);
-      this.categoryModel.destroy({ where: { id: _id } });
+      this.categoryModel.destroy({
+        where: { id: _id },
+        transaction: this.unitOfWork?.getTransaction(),
+      });
     }
 
     private async _get(id: string): Promise<CategoryModel> {
       return this.categoryModel.findByPk(id, {
-        rejectOnEmpty: new NotFoundError(`Entity Not Found using ID ${id}`),
+        rejectOnEmpty: new NotFoundError(id, Category),
+        transaction: this.unitOfWork?.getTransaction(),
       });
     }
 
@@ -115,10 +173,11 @@ export namespace CategorySequelize {
           where: { name: { [Op.like]: `%${props.filter}%` } },
         }),
         ...(props.sort && this.sortableFields.includes(props.sort)
-          ? { order: [[props.sort, props.sort_dir]] }
+          ? { order: this.formatSort(props.sort, props.sort_dir) }
           : { order: [["created_at", "DESC"]] }),
         offset,
         limit,
+        transaction: this.unitOfWork?.getTransaction(),
       });
       return new CategoryRepositoryContract.SearchResult({
         items: models.map((m) => CategoryModelMapper.toEntity(m)),
@@ -130,13 +189,25 @@ export namespace CategorySequelize {
         sort_dir: props.sort_dir,
       });
     }
+
+    private formatSort(sort: string, sort_dir: SortDirection) {
+      const dialect = this.categoryModel.sequelize.getDialect();
+      if (this.orderBy[dialect] && this.orderBy[dialect][sort]) {
+        return this.orderBy[dialect][sort](sort_dir);
+      }
+      return [[sort, sort_dir]];
+    }
+
+    setUnitOfWork(unitOfWork: UnitOfWorkSequelize): void {
+      this.unitOfWork = unitOfWork;
+    }
   }
 
   export class CategoryModelMapper {
     static toEntity(model: CategoryModel) {
       const { id, ...otherData } = model.toJSON();
       try {
-        return new Category(otherData, new UniqueEntityId(id));
+        return new Category(otherData, new CategoryId(id));
       } catch (e) {
         if (e instanceof EntityValidationError) {
           throw new LoadEntityError(e.error);

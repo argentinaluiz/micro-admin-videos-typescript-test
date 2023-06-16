@@ -1,4 +1,4 @@
-import { SearchResult } from "../../domain/repository/repository-contracts";
+import { SearchResult } from "../../domain/persistence/repository-contracts";
 import { PaginationOutputMapper } from "./pagination-output";
 
 describe("PaginationOutputMapper Unit Tests", () => {

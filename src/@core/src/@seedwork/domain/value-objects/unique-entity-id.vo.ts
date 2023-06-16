@@ -3,7 +3,7 @@ import InvalidUuidError from "../errors/invalid-uuid.error";
 import ValueObject from "./value-object";
 
 export class UniqueEntityId extends ValueObject<string> {
-  constructor(readonly id?: string) {
+  constructor(id?: string) {
     super(id || uuidv4());
     this.validate();
   }
@@ -11,7 +11,7 @@ export class UniqueEntityId extends ValueObject<string> {
   private validate() {
     const isValid = uuidValidate(this.value);
     if (!isValid) {
-      throw new InvalidUuidError();
+      throw new InvalidUuidError(this.value);
     }
   }
 }

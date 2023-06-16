@@ -2,6 +2,7 @@ import {GetCategoryUseCase} from "../../get-category.use-case";
 import NotFoundError from "../../../../../@seedwork/domain/errors/not-found.error";
 import { CategorySequelize } from "../../../../infra/db/sequelize/category-sequelize";
 import { setupSequelize } from "../../../../../@seedwork/infra/testing/helpers/db";
+import { Category } from "../../../../domain";
 
 const { CategoryRepository, CategoryModel } = CategorySequelize;
 
@@ -18,7 +19,7 @@ describe("GetCategoryUseCase Integration Tests", () => {
 
   it("should throws error when entity not found", async () => {
     await expect(() => useCase.execute({ id: "fake id" })).rejects.toThrow(
-      new NotFoundError(`Entity Not Found using ID fake id`)
+      new NotFoundError('fake id', Category)
     );
   });
 

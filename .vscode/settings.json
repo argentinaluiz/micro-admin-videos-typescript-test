@@ -5,23 +5,25 @@
         "settings.json"
     ],
     "workbench.colorCustomizations": {
-        "activityBar.activeBackground": "#2f7c47",
+        "activityBar.activeBackground": "#13321d",
         "activityBar.activeBorder": "#422c74",
-        "activityBar.background": "#2f7c47",
+        "activityBar.background": "#13321d",
         "activityBar.foreground": "#e7e7e7",
         "activityBar.inactiveForeground": "#e7e7e799",
-        "activityBarBadge.background": "#422c74",
+        "activityBarBadge.background": "#6b46b9",
         "activityBarBadge.foreground": "#e7e7e7",
-        "sash.hoverBorder": "#2f7c47",
-        "statusBar.background": "#2f7c47",
+        "sash.hoverBorder": "#13321d",
+        "statusBar.background": "#13321d",
         "statusBar.foreground": "#e7e7e7",
-        "statusBarItem.hoverBackground": "#3da15c",
-        "statusBarItem.remoteBackground": "#2f7c47",
+        "statusBarItem.hoverBackground": "#215732",
+        "statusBarItem.remoteBackground": "#13321d",
         "statusBarItem.remoteForeground": "#e7e7e7",
-        "tab.activeBorder": "#2f7c47",
-        "titleBar.activeBackground": "#2f7c47",
+        "tab.activeBorder": "#13321d",
+        "titleBar.activeBackground": "#13321d",
         "titleBar.activeForeground": "#e7e7e7",
-        "titleBar.inactiveBackground": "#2f7c4799",
-        "titleBar.inactiveForeground": "#e7e7e799"
-    }
+        "titleBar.inactiveBackground": "#13321d99",
+        "titleBar.inactiveForeground": "#e7e7e799",
+        "commandCenter.border": "#e7e7e799"
+    },
+    "jest.jestCommandLine": "npm run test -- --runInBand --detectOpenHandles --forceExit",
 }

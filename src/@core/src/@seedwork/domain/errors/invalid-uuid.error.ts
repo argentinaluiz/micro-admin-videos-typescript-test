@@ -1,6 +1,7 @@
 export class InvalidUuidError extends Error {
-  constructor(message?: string) {
-    super(message || "ID must be a valid UUID");
+  constructor(invalidValue: any) {
+    //super(message || "ID must be a valid UUID");
+    super(`ID ${invalidValue} must be a valid UUID`);
     this.name = "InvalidUuidError";
   }
 }

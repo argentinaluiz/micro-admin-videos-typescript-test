@@ -17,7 +17,7 @@ describe("UniqueEntityId Unit Tests", () => {
 
   it("should throw error when uuid is invalid", () => {
     //const validateSpy = spyValidateMethod();
-    expect(() => new UniqueEntityId("fake id")).toThrow(new InvalidUuidError());
+    expect(() => new UniqueEntityId("fake id")).toThrow(new InvalidUuidError('fake id'));
     expect(validateSpy).toHaveBeenCalled();
   });
 

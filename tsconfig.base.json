@@ -14,7 +14,8 @@
       "strictBindCallApply": false,
       "forceConsistentCasingInFileNames": false,
       "noFallthroughCasesInSwitch": false,
-      "allowJs": true
+      "allowJs": true,
+      "esModuleInterop": true
     }
   }
   

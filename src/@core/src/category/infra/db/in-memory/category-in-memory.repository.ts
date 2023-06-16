@@ -1,10 +1,10 @@
-import { SortDirection } from "#seedwork/domain/repository/repository-contracts";
-import { InMemorySearchableRepository } from "../../../../@seedwork/domain/repository/in-memory.repository";
-import { Category } from "../../../domain/entities/category";
+import { SortDirection } from "#seedwork/domain/persistence/repository-contracts";
+import { InMemorySearchableRepository } from "../../../../@seedwork/domain/persistence/in-memory.repository";
+import { Category, CategoryId } from "../../../domain/entities/category";
 import CategoryRepository from "../../../domain/repository/category.repository";
 
 export class CategoryInMemoryRepository
-  extends InMemorySearchableRepository<Category>
+  extends InMemorySearchableRepository<Category, CategoryId>
   implements CategoryRepository.Repository
 {
   sortableFields: string[] = ["name", "created_at"];
@@ -30,6 +30,10 @@ export class CategoryInMemoryRepository
     return !sort
       ? super.applySort(items, "created_at", "desc")
       : super.applySort(items, sort, sort_dir);
+  }
+
+  getEntity(): new (...args: any[]) => Category {
+    return Category;
   }
 }
 

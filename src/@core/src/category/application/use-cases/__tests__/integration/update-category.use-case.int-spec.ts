@@ -3,6 +3,7 @@ import NotFoundError from "../../../../../@seedwork/domain/errors/not-found.erro
 import { CategorySequelize } from "../../../../infra/db/sequelize/category-sequelize";
 import { setupSequelize } from "../../../../../@seedwork/infra/testing/helpers/db";
 import { CategoryFakeBuilder } from "../../../../domain/entities/category-fake-builder";
+import { Category } from "../../../../domain";
 
 const { CategoryRepository, CategoryModel } = CategorySequelize;
 
@@ -20,7 +21,7 @@ describe("UpdateCategoryUseCase Integration Tests", () => {
   it("should throws error when entity not found", async () => {
     await expect(() =>
       useCase.execute({ id: "fake id", name: "fake" })
-    ).rejects.toThrow(new NotFoundError(`Entity Not Found using ID fake id`));
+    ).rejects.toThrow(new NotFoundError('fake id', Category));
   });
 
   it("should update a category", async () => {
@@ -144,12 +145,20 @@ describe("UpdateCategoryUseCase Integration Tests", () => {
         description: i.input.description,
         is_active: i.input.is_active,
       });
+      const entityUpdated = await repository.findById(i.input.id);
       expect(output).toStrictEqual({
         id: entity.id,
         name: i.expected.name,
         description: i.expected.description,
         is_active: i.expected.is_active,
-        created_at: i.expected.created_at,
+        created_at: entityUpdated.created_at,
+      });
+      expect(entityUpdated.toJSON()).toStrictEqual({
+        id: entity.id,
+        name: i.expected.name,
+        description: i.expected.description,
+        is_active: i.expected.is_active,
+        created_at: entityUpdated.created_at,
       });
     }
   });
